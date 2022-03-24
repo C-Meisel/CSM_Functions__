@@ -1,5 +1,5 @@
 .DS_store
-
+test_csm/**
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

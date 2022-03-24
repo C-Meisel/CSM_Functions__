@@ -1,0 +1,15 @@
+#Imports
+matplotlib
+pandas
+numpy
+sklearn
+scipy
+natsort
+# csv
+# zipfile
+openpyxl
+seaborn
+cmasher
+# mpl_toolkits
+
+-e git+https://github.com/jdhuang-csm/bayes-drt#egg=bayes_drt
