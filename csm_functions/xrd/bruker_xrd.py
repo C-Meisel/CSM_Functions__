@@ -10,11 +10,11 @@ import csv
 from shutil import copyfile
 import pandas as pd
 
-def brml2csv(loc:str):
+def brml2csv(loc:str)->str:
     '''
     Converts a brml file to a csv
 
-    param loc: location of brml file to covert to a csv
+    param loc: str, location of brml file to covert to a csv
     
     return -> the location of the desired csv
     '''
@@ -26,7 +26,14 @@ def brml2csv(loc:str):
     copyfile(loc_data, loc_data.replace('.xml','')+'.csv') #Creating a new file that is a .csv
     return loc_data
 
-def bruker_xrd_format(loc:str):
+def bruker_xrd_format(loc:str) -> pd.DataFrame:
+    '''
+    Converts a brml file to a dataframe containing the necessary XRD data
+
+    param loc: str, location of brml file to covert to a dataframe
+    
+    returns -> a dataframe of the desired XRD data
+    '''
     loc_data = brml2csv(loc)
     loc_csv = loc_data.replace('.xml','')+'.csv' #Access new csv
     file = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter=",") #I honestly dk what is going on here, but it works
@@ -46,7 +53,18 @@ def bruker_xrd_format(loc:str):
     df.drop(labels=['datum','idk','theta'], axis=1,inplace=True) #Drops randon ass columns that no one needs. wont work w/o inplace=True
     return df
 
-def plot_xrds_bruker(loc:str, material='',y_offset=0,normalize=True):
+def plot_xrds_bruker(loc:str, material: str ='',y_offset: float=0,normalize: bool=True):
+    '''
+    Takes a BRML file, extracts teh necesseary data and plots it
+    Placing multiple of these functions one after another will plot multiple spectra on the same plot
+
+    param loc: str, location of brml file (XRD data) to plot
+    param material: str, The name of the material that is being plot (this will be put in the plotting legend)
+    param y_offset: float, shifting the spectra up or down.
+    param normalize: bool, whether or not to normalize the XRD spectra to 1. Default is True
+    
+    return -> none but a figure will be plotted and shown
+    '''
     df = bruker_xrd_format(loc)
     # /\/\/\/\/\/\/\/\ Normalizing the data to 1 /\/\/\/\/\/\/\/\ #
     if normalize==True:
