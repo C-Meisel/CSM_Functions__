@@ -1,3 +1,2 @@
-This module consists of convenience functions to help streamline research
+This module consists of convenience functions to help streamline my research
 
-source test_csm/bin/activate
