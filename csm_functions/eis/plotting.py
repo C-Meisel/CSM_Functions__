@@ -332,7 +332,7 @@ def plot_ivec(area:float, loc:str):
         sign = 1
     ax1.plot(df_useful['A'], sign*df_useful['V'],'o', color=color)
     ax1.tick_params(axis='y')
-    
+
     # ------- Calculating and printing current density at 1.5V
     current_density15 = -df_useful[abs(df_useful['V'])>=1.49].iloc[0,1] #finds the current density of the first Voltage value above 1.5V
     V15 = df_useful[abs(df_useful['V'])>=1.49].iloc[0,0] #same as before but returns the exact voltage value
@@ -381,11 +381,22 @@ def plot_ivecs(area:float,condition:str,loc:str):
 
 def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=False,first_file:str = 'default'):
     '''
-    #If you want to change the first file, put the loc in place of 'default
+    Looks through the specified folder and plots all the galvanostatic stability testing data in one plot, 
+    and fits it. This function compliments the gamry sequence I use for stability testing
+
+    param FolderLoc,string: The location of the folder that contains the .DTA files to be plotted
+    param fit,bool: Whether or not to linearly fit the data and print on the plot
+    param fontsize,int: The fontsize of the words on the plot
+    param smooth,bool: Whether or not to smooth the data
+    param first_file,string: Identifies the first file in the stability test. This is used as a time reference
+    If 'default' then the first file taken is used though this currently doesn't work
+    If you want to change the first file, put the loc in place of 'default
+
+    Return --> none but it plots the figure and shows it
     '''
     
-    files = os.listdir(FolderLoc)
-    useful_files = [] #initializing a list for the useful files
+    files = os.listdir(FolderLoc) # obtaining a list of the files in the desired folder
+    useful_files = [] # initializing a list for the useful files
 
     # ------- Taking out all of the galvanostatic files
     for file in files: #looping over all files in the folder Folderloc
@@ -438,7 +449,7 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
     ax.tick_params(axis='both', which='major', labelsize=12) #changing tick label size
     if smooth == False:
         ax.plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
-    if smooth == True:
+    if smooth == True: #Averages out data points to smooth the curve
         bin_size = 50
         bins = cat_dfs['V vs. ef.'].rolling(bin_size)
         moving_avg_voltage = bins.mean()
@@ -453,6 +464,215 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
         mp = m*-100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
         ms = f'{round(mp,3)}'
         plt.figtext(0.27,0.17,'Degradation: '+ms+'% /khrs',weight='bold',size='xx-large')
+    plt.tight_layout()
+    plt.show()
+
+def plot_ocvDeg(FolderLoc:str,fit:bool=True,first_file = 'default',fontsize = 16):
+    '''
+    Looks through the specified folder and plots all the ocv stability test data in one plot and fits it.
+    This function compliments the gamry sequence I use for stability testing.
+    
+    param FolderLoc,string: The location of the folder containing the files to be plotted
+    param fit,bool: Whether or not to fit the data
+    param first_file,string: The first file to be plotted. If 'default' then the first file taken is used though this currently doesn't work
+    param first_file,string: Identifies the first file in the stability test. This is used as a time reference
+    If 'default' then the first file taken is used though this currently doesn't work
+    If you want to change the first file, put the loc in place of 'default
+
+    Return --> none, but it plots the data, fits it, and shows it
+    '''
+
+    files = os.listdir(FolderLoc)
+    useful_files = [] #initializing a list for the useful files
+
+    # ======= Taking out all of the ocv files
+    for file in files: #looping over all files in the folder Folderloc
+        if (file.find('OCV')!=-1) and (file.find('.DTA')!=-1) and (file.find('Deg')!=-1):
+            useful_files.append(os.path.join(FolderLoc,file))
+    for file in useful_files: #Finding the first file
+        if file.find('Deg__#1')!=-1:
+            file1 = os.path.join(FolderLoc,file)
+    if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
+        T0_stamp = fl.get_timestamp(file1) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+    else:
+        T0_stamp = fl.get_timestamp(first_file) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+    dfs = [] #Initializing list of dfs
+    length = len(useful_files) #gets length of sorted useful files
+    for i in range(0,length,1):
+        dta2csv(useful_files[i]) #convert DTA to a CSV
+        loc_csv = useful_files[i].replace('.DTA','')+'.csv' #access newly made file
+        data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
+        for row in data: #searches first column of each row in csv for "ZCURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = data.line_num+1
+                break
+        df = pd.read_csv(loc_csv,sep= '\t',skiprows=skip,encoding='latin1') #creat data frame for a file
+        start_time = fl.get_timestamp(useful_files[i]).strftime("%s") #Find the start time of the file in s from epoch
+        df['s'] = df['s'] + int(start_time)
+        df_useful = df[['s','V vs. Ref.']]
+        dfs.append(df_useful)
+    cat_dfs = pd.concat(dfs)# (s) Combine all the dataframes in the file folder
+    cat_dfs['s'] = (cat_dfs['s']-int(t0))/3600 #(hrs) subtracting the start time to get Delta t and converting time from seconds to hours and
+    fig, ax = plt.subplots()
+    ax.set_xlabel('Time (hrs)',fontsize = fontsize)
+    ax.set_ylabel('Voltage (V)',fontsize = fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=12) #changing tick label size
+    ax.plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
+    ax.set_ylim(0,1.2)
+
+    # ======= fitting and writting slope on graph: 
+    if fit == True:
+        m,b = np.polyfit(cat_dfs['s'],cat_dfs['V vs. Ref.'],1)
+        fit = m*cat_dfs['s']+b
+        ax.plot(cat_dfs['s'],fit,'--r')
+        mp = m*-100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
+        ms = f'{round(mp,3)}'
+        plt.figtext(0.31,0.15,'Degradation: '+ms+'% /khrs',weight='bold',size='x-large')
+    plt.show()
+
+def plot_bias_potentio_holds(area,folder_loc,voltage=True):
+    '''
+    Plots the 30 minute potentiostatic holds in between the bias EIS spectra.
+    This function complements the gamry sequence I use for bias testing.
+
+    param area, float: The active cell area in cm^2
+    param folder_loc, string: The location of the folder containing the files to be plotted
+    param voltage, bool: Whether or not to plot the voltage with the current
+
+    Return --> none, but it plots the data and shows it
+    '''
+
+    files = os.listdir(folder_loc)
+    useful_files = []
+
+    # >>>>>>>> Making a list of all the files of potentiostatic holds during a bias test
+    for file in files:
+        if (file.find('PSTAT')!=-1) and (file.find('.DTA')!=-1):
+            useful_files.append(file)
+
+    # >>>>>>>> Getting the first time for reference
+    T0_stamp = fl.get_timestamp(os.path.join(folder_loc,'PSTAT_5bias.DTA')) #gets time stamp from first file
+    t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+
+    # >>>>>>>> extracting the useful information from the files and placing it into a dataframe
+    dfs = [] #Initializing list of dfs
+    size = len(useful_files) #gets length of the useful files list
+    for i in range(0,size,1):
+        loc = os.path.join(folder_loc,useful_files[i]) #Creats a file path to the file of choice
+        dta2csv(loc) #convert DTA to a CSV
+        loc_csv = loc.replace('.DTA','')+'.csv' #access newly made file
+        data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
+        for row in data: #searches first column of each row in csv for "ZCURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = data.line_num+1
+                break
+        df = pd.read_csv(loc_csv,sep= '\t',skiprows=skip,encoding='latin1') #creat data frame for a file
+        start_time = fl.get_timestamp(loc).strftime("%s") #Find the start time of the file in s from epoch
+        df['s'] = df['s'] + int(start_time)
+        df_useful = df[['s','A','V vs. Ref.']]
+        dfs.append(df_useful)
+    cat_dfs = pd.concat(dfs)# (s) Combine all the dataframes in the file folder
+    cat_dfs['s'] = (cat_dfs['s']-int(t0))/3600 #(hrs) subtracting the start time to get Delta t and converting time from seconds to hours and
+    cat_dfs['A'] = cat_dfs['A'].div(area)
+
+    # >>>>>>>> plotting:
+    if voltage == True:
+        # Finding OCV:
+        for file in files:
+            if (file.find('0bias.DTA')!=-1) and (file.find('OCV')!=-1):
+                ocv_path = os.path.join(folder_loc,file)
+        dta2csv(ocv_path) #convert DTA to a CSV
+        loc_ocv_csv = ocv_path.replace('.DTA','')+'.csv' #access newly made file
+        ocv_data = csv.reader(open(loc_ocv_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
+        skip = 0
+        for row in ocv_data: #searches first column of each row in csv for "CURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = ocv_data.line_num+1
+                break
+        df_ocv = pd.read_csv(loc_ocv_csv,sep= '\t',skiprows=skip,encoding='latin1') #creat data frame for a file
+        avg_ocv = df_ocv['V'].mean()
+
+        # --- Initializing FIgure
+        fig,axs = plt.subplots(2)
+
+        # --- Plotting Bias
+        axs[0].set_xlabel('Time (hrs)')
+        axs[0].set_ylabel('Voltage (V)')
+        axs[0].plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
+        axs[0].axhline(y=avg_ocv, color= 'r', linestyle='--')
+
+        # --- Plotting Current Density
+        axs[1].set_xlabel('Time (hrs)')
+        axs[1].set_ylabel('Current Density (A/cm$^2$)')
+        axs[1].plot(cat_dfs['s'],-cat_dfs['A'],'.k')
+
+        # --- Extras
+        axs[1].axhline(y=0, color= 'r', linestyle='--') #Plots 0 Bias on the Current density chart
+        plt.figtext(0.15,0.45,'Fuel Cell',weight='bold')
+        plt.figtext(0.15,0.35,'Electrolysis',weight='bold')
+        plt.tight_layout()
+        plt.show()
+    else:
+        fig,ax = plt.subplots()
+        ax.set_xlabel('Time (hrs)')
+        ax.set_ylabel('Current Density (A/cm$^2$)')
+        ax.plot(cat_dfs['s'],-cat_dfs['A'],'.k')
+        # --- Plot extras
+        plt.axhline(y=0, color= 'r', linestyle='--')
+        plt.show()
+
+def lnpo2(ohmic_asr,rp_asr,O2_conc): 
+    '''
+    Plots ln(1/ASRs) as a function of ln(PO2), imputs are arrays
+
+    param ohmic_asr, array: The ohmic area specific resistance values of the eis spectra
+    at different oxygen concentrations
+    param rp_asr, array: The rp area specific resistance values of the eis spectra at different
+    oxygen concentrations
+    param O2_conc, array: The oxygen concentrations that the EIS spectra were taken at
+
+    Returns --> None, but it plots the data and shows it
+    '''
+    # Making ln arrays:
+    #pDen = 0.83 #ATM
+    ln_O2 = np.log(O2_conc) #*pDen)
+    ln_ohmic_asr = np.log(1/ohmic_asr)
+    ln_rp_asr = np.log(1/rp_asr)
+    # Plotting
+    fig,ax = plt.subplots()
+    ax.plot(ln_O2,ln_ohmic_asr,'o',color = '#21314D',label = r'ASR$_\mathrm{O}$')
+    ax.plot(ln_O2,ln_rp_asr,'o',color = '#D2492A',label = r'ASR$_\mathrm{P}$')
+    # Fitting
+    mo,bo = np.polyfit(ln_O2,ln_ohmic_asr,1)
+    mr,br = np.polyfit(ln_O2,ln_rp_asr,1)
+    fit_o = mo*ln_O2 + bo
+    fit_r = mr*ln_O2 + br
+    ax.plot(ln_O2,fit_o,color = '#21314D')
+    ax.plot(ln_O2,fit_r,color = '#D2492A')
+    # Formatting
+    ax.set_xlabel('ln(O$_2$) (%)')
+    ax.set_ylabel('ln(1/ASR) (S/cm$^2$)') #(\u03A9*cm$^2$)
+    ax.set_xlim(-1.7,0.1)
+    ax.legend()
+    #Setting up second x axis
+    axx2 = ax.twiny()
+    axx2.set_xlabel('Oxygen Concentration (%)')
+    axx2.set_xticks(ln_O2)
+    axx2.set_xticklabels(O2_conc*100)
+    axx2.set_xlim(-1.7,0.1)
+    # Figtext - If statement is to componsate for the fact that if Rp>ohmic Rp line is lower and visa-versa
+    if ohmic_asr[0]<rp_asr[0]: 
+        mo_str = f'{round(mo,2)}'
+        plt.figtext(0.5,0.84,r'ASR$_\mathrm{O}$ Slope = '+mo_str,weight='bold')
+        mr_str = f'{round(mr,2)}'
+        plt.figtext(0.5,0.15,r'ASR$_\mathrm{P}$ Slope = '+mr_str,weight='bold')    
+    elif ohmic_asr[0]>rp_asr[0]:
+        mo_str = f'{round(mo,2)}'
+        plt.figtext(0.5,0.15,r'ASR$_\mathrm{O}$ Slope = '+mo_str,weight='bold')
+        mr_str = f'{round(mr,2)}'
+        plt.figtext(0.5,0.84,r'ASR$_\mathrm{P}$ Slope = '+mr_str,weight='bold')  
     plt.tight_layout()
     plt.show()
 
