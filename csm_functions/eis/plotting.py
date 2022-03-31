@@ -6,6 +6,12 @@ data. The data files are obtained by a Gamry potentiostat. The files are .DTA fi
 'Imports'
 import pandas as pd
 import csv
+import matplotlib.pyplot as plt
+import numpy as np
+from bayes_drt import file_load as fl
+import os
+
+from .data_formatting import dta2csv
 
 def plot_ocv(loc : str):
     '''
@@ -532,7 +538,7 @@ def plot_ocvDeg(FolderLoc:str,fit:bool=True,first_file = 'default',fontsize = 16
         plt.figtext(0.31,0.15,'Degradation: '+ms+'% /khrs',weight='bold',size='x-large')
     plt.show()
 
-def plot_bias_potentio_holds(area,folder_loc,voltage=True):
+def plot_bias_potentio_holds(area:float,folder_loc:str,voltage:bool=True):
     '''
     Plots the 30 minute potentiostatic holds in between the bias EIS spectra.
     This function complements the gamry sequence I use for bias testing.
@@ -623,7 +629,7 @@ def plot_bias_potentio_holds(area,folder_loc,voltage=True):
         plt.axhline(y=0, color= 'r', linestyle='--')
         plt.show()
 
-def lnpo2(ohmic_asr,rp_asr,O2_conc): 
+def lnpo2(ohmic_asr:np.array,rp_asr:np.array,O2_conc:np.array): 
     '''
     Plots ln(1/ASRs) as a function of ln(PO2), imputs are arrays
 
@@ -635,33 +641,37 @@ def lnpo2(ohmic_asr,rp_asr,O2_conc):
 
     Returns --> None, but it plots the data and shows it
     '''
-    # Making ln arrays:
-    #pDen = 0.83 #ATM
-    ln_O2 = np.log(O2_conc) #*pDen)
+    # ----- Making ln arrays:
+    ln_O2 = np.log(O2_conc)
     ln_ohmic_asr = np.log(1/ohmic_asr)
     ln_rp_asr = np.log(1/rp_asr)
-    # Plotting
+
+    # ----- Plotting
     fig,ax = plt.subplots()
     ax.plot(ln_O2,ln_ohmic_asr,'o',color = '#21314D',label = r'ASR$_\mathrm{O}$')
     ax.plot(ln_O2,ln_rp_asr,'o',color = '#D2492A',label = r'ASR$_\mathrm{P}$')
-    # Fitting
+
+    # ----- Fitting
     mo,bo = np.polyfit(ln_O2,ln_ohmic_asr,1)
     mr,br = np.polyfit(ln_O2,ln_rp_asr,1)
     fit_o = mo*ln_O2 + bo
     fit_r = mr*ln_O2 + br
     ax.plot(ln_O2,fit_o,color = '#21314D')
     ax.plot(ln_O2,fit_r,color = '#D2492A')
-    # Formatting
+
+    # ----- Formatting
     ax.set_xlabel('ln(O$_2$) (%)')
     ax.set_ylabel('ln(1/ASR) (S/cm$^2$)') #(\u03A9*cm$^2$)
     ax.set_xlim(-1.7,0.1)
     ax.legend()
-    #Setting up second x axis
+
+    # ----- Setting up second x axis
     axx2 = ax.twiny()
     axx2.set_xlabel('Oxygen Concentration (%)')
     axx2.set_xticks(ln_O2)
     axx2.set_xticklabels(O2_conc*100)
     axx2.set_xlim(-1.7,0.1)
+    
     # Figtext - If statement is to componsate for the fact that if Rp>ohmic Rp line is lower and visa-versa
     if ohmic_asr[0]<rp_asr[0]: 
         mo_str = f'{round(mo,2)}'

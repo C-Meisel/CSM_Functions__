@@ -6,6 +6,7 @@ data. The data files are obtained by a Gamry potentiostat. The files are .DTA fi
 'Imports'
 import pandas as pd
 import csv
+from shutil import copyfile
 
 def dta2csv(loc:str):
     '''
