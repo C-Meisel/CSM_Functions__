@@ -33,37 +33,39 @@ def arrhenius_plots(folder_loc:str, jar:str, temps:list, area,plot_eis:bool = Tr
 
     This function gives the option to plot the EIS, DRT, and DRT peaks for the Arrhenius EIS files.
 
-    Param: folder_loc, str: (path to a directory)
+    Parameters
+    ----------
+    folder_loc, str: (path to a directory)
         The location of the directory containing the EIS files. 
-    Param: jar, str: (path to a directory)
+    jar, str: (path to a directory)
         The location of the directory to contain the DRT map-fits.
-    Param: temps, list: 
+    temps, list: 
         List of temperatures that the EIS spectra were taken at. this is input by the user 
         and must be in the same order that the EIS spectra were taken at.
-    Param: area, float:
+    area, float:
         The active cell area of the cell in cm^2
-    Param: plot_eis, bool:
+    plot_eis, bool:
         If true all the EIS spectra used in making the Arrhenius plot will be plotted.
-    Param: plot_drt, bool:
+    plot_drt, bool:
         If true the DRT map-fits will be plotted.
-    Param: drt_peaks, bool:
+    drt_peaks, bool:
         If true all the DRT spectra will be fit using the Bayes-DRT package and the
         resistance of each peak will be plotted.
-    Param: thickness, float: (Default is 0)
+    thickness, float: (Default is 0)
         The thickness of the electrolyte of the cell in cm. If there is no SEM data on the electrolyte
         thickness then leave the value at it's default value of 0.
-    Param: rp_plt_type, str: (Default is 'ln')
+    rp_plt_type, str: (Default is 'ln')
         Type of arrhenius plot to make for the polarization resistance plot. The two values are ln or asr.
         The ln plot is a log-log plot and the asr plot is a semilogx plot. The activation energy (Ea) is 
         only calculated if an ln plot is made.
-    Param: which, str: (Default is 'core')
+    which, str: (Default is 'core')
         Which data to store. 'core' or 'sample'. Core file sizes are smaller
-    Param: init_from_ridge, bool: optional (default: False)
+    init_from_ridge, bool: optional (default: False)
         If True, use the hyperparametric ridge solution to initialize the Bayesian fit.
         Only valid for single-distribution fits
-    Param re-fit, bool: optional (default: False)
+    re-fit, bool: optional (default: False)
         If True, the EIS data will have the DRT fits re-fit and re-stored in the cell data excel file.
-    Param legend_loc, str: optional (default: 'outside')
+    legend_loc, str: optional (default: 'outside')
         The location of the legend. Outside placed the legend outside the figure.
         The other option is 'best' and this uses 'best' to make the best decision on where to place
         the legend insisde the figure.
@@ -366,3 +368,44 @@ def arrhenius_plots(folder_loc:str, jar:str, temps:list, area,plot_eis:bool = Tr
         plot.set(xscale='log')
         plt.tight_layout()
         plt.show()
+
+def arrhenius_iv_curves(folder_loc:str, temps:list):
+    '''
+    Searches through the folder_loc for hte IV curves taken during arrhenius testing. 
+    It plots the iv curve and its corresponding power density curve for each temperature
+
+    Parameters
+    ----------
+    folder_loc, str: (path to a directory)
+        The location of the directory containing the EIS files. 
+    jar, str: (path to a directory)
+        The location of the directory to contain the DRT map-fits.
+    temps, list: 
+        List of temperatures that the EIS spectra were taken at. this is input by the user 
+        and must be in the same order that the EIS spectra were taken at.
+
+    Returns --> Nothin, but plots and shows the IV curves and power density curves for each temperature
+    '''
+    
+    # --- Finding correct files and sorting
+    ahp_iv = [file for file in os.listdir(folder_loc) if file.endswith('.DTA') and file.find('Ahp')!=-1 and file.find('IV')!=-1] #Makes a list of all ahp
+    ahp_iv = sorted(ahp_iv, key=lambda x: int((x[x.find('Ahp_#')+len('Ahp_#'):x.rfind('.DTA')]))) #Sorts numerically by bias
+    ahp_iv_loc = []
+    for file in ahp_iv:
+        ahp_iv_loc.append(os.path.join(folder_loc,file))
+
+    area_list = [area]*len(ahp_iv)
+
+    # --- Adding the degree symbol to the curves
+    str_temps = []
+    for temp in temps:
+        temp = str(temp)
+        temp += '\u00B0C'
+        str_temps.append(temp)
+
+    # --- Merging curves and conditions
+    curves_conditions = tuple(zip(area_list,str_temps,ahp_iv_loc)) 
+    cmap = plt.cm.get_cmap('coolwarm_r')
+    plot_ivfcs(curves_conditions,print_Wmax=True,cmap=cmap)
+
+
