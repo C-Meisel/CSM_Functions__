@@ -166,7 +166,7 @@ def plot_peiss(area:float, condition:str, loc:str, ncol:int=1,legend_loc:bool='b
 
     plt.tight_layout()
 
-def plot_eis_ocvs(loc:str,label:str,ymin:float=1.00,ymax:float=1.10,ncol:int=1):
+def plot_eis_ocvs(loc:str, label:str, ymin:float=1.00, ymax:float=1.10, ncol:int=1):
     '''
     Plots the ocv that is taken right before the EIS data. This function can stack to plot
     multiple ocv files on the same plot. Same as peiss.
@@ -385,12 +385,13 @@ def plot_ivecs(area:float,condition:str,loc:str):
     plt.yticks(fontsize = 'large')
     plt.tight_layout()
 
-def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=False,first_file:str = 'default'):
+def plot_galvanoDeg(folder_loc:str, fit:bool = True, fontsize:int = 16, smooth:bool=False,
+                     first_file:str = 'default'):
     '''
     Looks through the specified folder and plots all the galvanostatic stability testing data in one plot, 
     and fits it. This function compliments the gamry sequence I use for stability testing
 
-    param FolderLoc,string: The location of the folder that contains the .DTA files to be plotted
+    param folder_loc,string: The location of the folder that contains the .DTA files to be plotted
     param fit,bool: Whether or not to linearly fit the data and print on the plot
     param fontsize,int: The fontsize of the words on the plot
     param smooth,bool: Whether or not to smooth the data
@@ -401,11 +402,11 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
     Return --> none but it plots the figure and shows it
     '''
     
-    files = os.listdir(FolderLoc) # obtaining a list of the files in the desired folder
+    files = os.listdir(folder_loc) # obtaining a list of the files in the desired folder
     useful_files = [] # initializing a list for the useful files
 
     # ------- Taking out all of the galvanostatic files
-    for file in files: #looping over all files in the folder Folderloc
+    for file in files: #looping over all files in the folder folder_loc
         if (file.find('GS')!=-1) and (file.find('.DTA')!=-1):
             #Extracting the file number (used for sorting, yeah this is probably a roundabout way of doing it)
             start, end = file.rsplit('#',1)# cutting everything out before the # so only the number and file extension is left
@@ -417,7 +418,7 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
     # ------- Sorting the files
     useful_files.sort(key=lambda x:x[1]) #Sorts by the second number in the tupple
     sorted_useful_files, numbers = zip(*useful_files) #splits the tupple
-    sorted_useful_files = [FolderLoc + '/' + f for f in sorted_useful_files] #Turning all files from their relative paths to the absolute path
+    sorted_useful_files = [folder_loc + '/' + f for f in sorted_useful_files] #Turning all files from their relative paths to the absolute path
 
     # ------- Getting the first time
     if first_file == 'default':
@@ -431,7 +432,7 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
     dfs = [] #Initializing list of dfs
     length = len(sorted_useful_files) #gets length of sorted useful files
     for i in range(0,length,1):
-        loc = os.path.join(FolderLoc,sorted_useful_files[i]) #Creats a file path to the file of choice
+        loc = os.path.join(folder_loc,sorted_useful_files[i]) #Creats a file path to the file of choice
         dta2csv(loc) #convert DTA to a CSV
         loc_csv = loc.replace('.DTA','')+'.csv' #access newly made file
         data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
@@ -457,7 +458,7 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
         ax.plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
     if smooth == True: #Averages out data points to smooth the curve
         bin_size = 50
-        bins = cat_dfs['V vs. ef.'].rolling(bin_size)
+        bins = cat_dfs['V vs. Ref.'].rolling(bin_size)
         moving_avg_voltage = bins.mean()
         ax.plot(cat_dfs['s'],moving_avg_voltage,'k')
     ax.set_ylim(0,1.2)
@@ -469,35 +470,35 @@ def plot_galvanoDeg(FolderLoc:str,fit:bool = True,fontsize:int = 16,smooth:bool=
         ax.plot(cat_dfs['s'],fit,'--r')
         mp = m*-100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
         ms = f'{round(mp,3)}'
-        plt.figtext(0.27,0.17,'Degradation: '+ms+'% /khrs',weight='bold',size='xx-large')
+        plt.figtext(0.27,0.17,'Degradation: '+ms+'%/khrs',weight='bold',size='xx-large')
     plt.tight_layout()
     plt.show()
 
-def plot_ocvDeg(FolderLoc:str,fit:bool=True,first_file = 'default',fontsize = 16):
+def plot_ocvDeg(folder_loc:str, fit:bool=True, first_file = 'default', fontsize = 16):
     '''
     Looks through the specified folder and plots all the ocv stability test data in one plot and fits it.
     This function compliments the gamry sequence I use for stability testing.
     
-    param FolderLoc,string: The location of the folder containing the files to be plotted
+    param folder_loc,string: The location of the folder containing the files to be plotted
     param fit,bool: Whether or not to fit the data
-    param first_file,string: The first file to be plotted. If 'default' then the first file taken is used though this currently doesn't work
     param first_file,string: Identifies the first file in the stability test. This is used as a time reference
-    If 'default' then the first file taken is used though this currently doesn't work
-    If you want to change the first file, put the loc in place of 'default
+        If 'default' then the first file taken is used
+        If you want to change the first file, put the loc in place of 'default
+    param fontsize,int: The font size of the words on the plot
 
     Return --> none, but it plots the data, fits it, and shows it
     '''
 
-    files = os.listdir(FolderLoc)
+    files = os.listdir(folder_loc)
     useful_files = [] #initializing a list for the useful files
 
     # ======= Taking out all of the ocv files
-    for file in files: #looping over all files in the folder Folderloc
+    for file in files: #looping over all files in the folder folder_loc
         if (file.find('OCV')!=-1) and (file.find('.DTA')!=-1) and (file.find('Deg')!=-1):
-            useful_files.append(os.path.join(FolderLoc,file))
+            useful_files.append(os.path.join(folder_loc,file))
     for file in useful_files: #Finding the first file
         if file.find('Deg__#1')!=-1:
-            file1 = os.path.join(FolderLoc,file)
+            file1 = os.path.join(folder_loc,file)
     if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
         T0_stamp = fl.get_timestamp(file1) #gets time stamp from first file
         t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
@@ -534,6 +535,180 @@ def plot_ocvDeg(FolderLoc:str,fit:bool=True,first_file = 'default',fontsize = 16
         fit = m*cat_dfs['s']+b
         ax.plot(cat_dfs['s'],fit,'--r')
         mp = m*-100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
+        ms = f'{round(mp,3)}'
+        plt.figtext(0.31,0.15,'Degradation: '+ms+'% /khrs',weight='bold',size='x-large')
+    plt.show()
+
+def plot_EC_ocvStb(folder_loc:str, fit:bool=True, first_file = 'default', fontsize = 16):
+    '''
+    Looks through the specified folder and plots all the Electrolysis cell modeocv stability test data 
+    in one plot and fits it. This function compliments the gamry sequence I use for EC stability testing.
+    
+    param folder_loc,string: The location of the folder containing the files to be plotted
+    param fit,bool: Whether or not to fit the data
+    param first_file,string: Identifies the first file in the stability test. This is used as a time reference
+    If 'default' then the first file taken is used though this currently doesn't work
+    If you want to change the first file, put the loc in place of 'default
+    param fontsize,int: The font size of the words on the plot
+
+    Return --> none, but it plots the data, fits it, and shows it
+    '''
+    
+    files = os.listdir(folder_loc)
+    useful_files = [] #initializing a list for the useful files
+
+    # ======= Taking out all of the ocv files
+    for file in files: #looping over all files in the folder folder_loc
+        if (file.find('OCV')!=-1) and (file.find('.DTA')!=-1) and (file.find('ECstability')!=-1):
+            useful_files.append(os.path.join(folder_loc,file))
+    
+    # ======= Finding or defining the first file
+    for file in useful_files: #Finding the first file
+        if file.find('ECstability__#1.DTA')!=-1:
+            file1 = os.path.join(folder_loc,file)
+    if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
+        T0_stamp = fl.get_timestamp(file1) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+    else:
+        T0_stamp = fl.get_timestamp(first_file) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+    
+    # ======= Concatinating the EC mode OCV stability data
+    dfs = [] #Initializing list of dfs
+    length = len(useful_files) #gets length of sorted useful files
+    for i in range(0,length,1):
+        dta2csv(useful_files[i]) #convert DTA to a CSV
+        loc_csv = useful_files[i].replace('.DTA','')+'.csv' #access newly made file
+        data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
+        for row in data: #searches first column of each row in csv for "ZCURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = data.line_num+1
+                break
+        df = pd.read_csv(loc_csv,sep= '\t',skiprows=skip,encoding='latin1') #creat data frame for a file
+        start_time = fl.get_timestamp(useful_files[i]).strftime("%s") #Find the start time of the file in s from epoch
+        df['s'] = df['s'] + int(start_time)
+        df_useful = df[['s','V vs. Ref.']]
+        dfs.append(df_useful)
+    cat_dfs = pd.concat(dfs)# (s) Combine all the dataframes in the file folder
+    cat_dfs['s'] = (cat_dfs['s']-int(t0))/3600 #(hrs) subtracting the start time to get Delta t and converting time from seconds to hours and
+    fig, ax = plt.subplots()
+    ax.set_xlabel('Time (hrs)',fontsize = fontsize)
+    ax.set_ylabel('Voltage (V)',fontsize = fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=12) #changing tick label size
+    ax.plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
+    ax.set_ylim(0,1.2)
+
+    # ======= fitting and writting slope on graph: 
+    if fit == True:
+        m,b = np.polyfit(cat_dfs['s'],cat_dfs['V vs. Ref.'],1)
+        fit = m*cat_dfs['s']+b
+        ax.plot(cat_dfs['s'],fit,'--r')
+        mp = m*-100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
+        ms = f'{round(mp,3)}'
+        plt.figtext(0.31,0.15,'Stability: '+ms+'% /khrs',weight='bold',size='x-large')
+    plt.show()
+
+def plot_EC_galvanoStb(folder_loc:str,fit:bool=True,first_file = 'default',
+                        fontsize = 16, smooth:bool=False, plot_ocv:bool=False):
+    '''
+    Looks through the specified folder and plots all the Electrolysis cell mode galvanostatic stability test data 
+    in one plot and fits it. This function compliments the gamry sequence I use for EC stability testing.
+    
+    param folder_loc, str: (path to a directory)
+        The location of the folder containing the files to be plotted
+    param fit, bool: (default is True)
+        Whether or not to fit the data
+    param first_file, str:  (default is 'default')
+        Identifies the first file in the stability test. This is used as a time reference
+        If 'default' then the first file taken is used
+        If you want to change the first file, put the loc in place of 'default
+    param fontsize, int: (default is 16)
+        The font size of the words on the plot
+    param smooth, bool: (default is False)
+        Uses a moving average of 50 bins to average out datapoints and smooth out the line
+    param plot_ocv, bool: (default is False)
+        Whether or not to plot the OCV as a dotted line on the plot
+        The ocv value is the average OCV of the first OCV file in the stabilty test
+
+    Return --> none, but it plots the data, fits it, and shows it
+    '''
+    files = os.listdir(folder_loc)
+    useful_files = [] #initializing a list for the useful files
+
+    # ------- Taking out all of the ocv files
+    for file in files: #looping over all files in the folder folder_loc
+        if (file.find('GS')!=-1) and (file.find('.DTA')!=-1) and (file.find('ECstability')!=-1):
+            useful_files.append(os.path.join(folder_loc,file))
+
+    # ------- Finding or defining the first file
+    start = '' #Initializing for later
+    for file in files: #Finding the first file
+        if file.find('ECstability__#1.DTA')!=-1 and file.find('OCV')!=-1:
+            file1 = os.path.join(folder_loc,file)
+            start = file1
+    if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
+        T0_stamp = fl.get_timestamp(file1) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+    else:
+        T0_stamp = fl.get_timestamp(first_file) #gets time stamp from first file
+        t0 = T0_stamp.strftime("%s") #Conveting Datetime to seconds from Epoch
+        start = first_file
+
+    # ------- Concatinating the FC mode Galvanostatic Dataframes
+    dfs = [] #Initializing list of dfs
+    length = len(useful_files) #gets length of sorted useful files
+    for i in range(0,length,1):
+        dta2csv(useful_files[i]) #convert DTA to a CSV
+        loc_csv = useful_files[i].replace('.DTA','')+'.csv' #access newly made file
+        data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t") #I honestly dk what is going on here
+        for row in data: #searches first column of each row in csv for "ZCURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = data.line_num+1
+                break
+        df = pd.read_csv(loc_csv,sep= '\t',skiprows=skip,encoding='latin1') #creat data frame for a file
+        start_time = fl.get_timestamp(useful_files[i]).strftime("%s") #Find the start time of the file in s from epoch
+        df['s'] = df['s'] + int(start_time)
+        df_useful = df[['s','V vs. Ref.']]
+        dfs.append(df_useful)
+    cat_dfs = pd.concat(dfs)# (s) Combine all the dataframes in the file folder
+    cat_dfs['s'] = (cat_dfs['s']-int(t0))/3600 #(hrs) subtracting the start time to get Delta t and converting time from seconds to hours and
+
+    # ------- Plotting
+    fig, ax = plt.subplots()
+    ax.set_xlabel('Time (hrs)',fontsize = fontsize)
+    ax.set_ylabel('Voltage (V)',fontsize = fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=12) #changing tick label size
+    if smooth == False:
+        ax.plot(cat_dfs['s'],cat_dfs['V vs. Ref.'],'.k')
+    if smooth == True: #Averages out data points to smooth the curve
+        bin_size = 50
+        bins = cat_dfs['V vs. Ref.'].rolling(bin_size)
+        moving_avg_voltage = bins.mean()
+        ax.plot(cat_dfs['s'],moving_avg_voltage,'k')
+    ax.set_ylim(0,1.5)
+
+    # ------- Finding the OCV at the beginning this Stability test and plotting it
+    if plot_ocv == True:
+        loc_csv = start.replace('.DTA','')+'.csv' 
+        initial_ocv_data = csv.reader(open(loc_csv, "r",encoding='latin1'), delimiter="\t")
+        skip = 0
+        for row in initial_ocv_data: #searches first column of each row in csv for "CURVE", then adds 1. This gives the right amount of rows to skip
+            if row[0] == 'CURVE':
+                skip = initial_ocv_data.line_num+1
+                break
+            if row[0] == 'READ VOLTAGE': #For whatever reason the DTA files are different if the data is aborted
+                skip = initial_ocv_data.line_num+1
+                break
+        df = pd.read_csv(loc_csv,sep='\t',skiprows=skip,encoding='latin1')
+        ocv = df['V'].mean()
+        ax.axhline(y=ocv,color='k',alpha=0.5,linestyle='--') 
+
+    # ------- fitting and writting slope on graph: 
+    if fit == True:
+        m,b = np.polyfit(cat_dfs['s'],cat_dfs['V vs. Ref.'],1)
+        fit = m*cat_dfs['s']+b
+        ax.plot(cat_dfs['s'],fit,'--r')
+        mp = m*100000 #Converting the slope into a % per khrs (*100 to get to %, *1000 to get to khrs,*-1 for degredation)
         ms = f'{round(mp,3)}'
         plt.figtext(0.31,0.15,'Degradation: '+ms+'% /khrs',weight='bold',size='x-large')
     plt.show()

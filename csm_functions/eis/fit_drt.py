@@ -22,10 +22,12 @@ def bayes_drt_save(loc_eis:str,fit_path:str,fit_name:str):
     Made on 18May21, this is how I currently use Jake's Bayes fit function to fit eis spectra
     Changes will likely be made in the future as I learn more about DRT and Jakes Modules
 
-    param loc_eis, string: location of the EIS spectra (path to file)
-    param fit_path, string: path to save the fit. This will be the directory, or "Jar", that the fit
-    will be saved in. (path to folder)
-    param fit_name: string, The name of the fit. This will be the file name
+    param loc_eis, string: (path to a directory)
+        location of the EIS spectra 
+    param fit_path, string: (path to a directory)
+        path to save the fit. This will be the directory, or "Jar", that the fit will be saved in. 
+    param fit_name, string:
+        The name of the fit. This will be the file name
 
     Return --> None
     '''
@@ -64,19 +66,27 @@ def map_drt_save(loc_eis:str,fit_path:str,fit_name:str,which:bool='core',init_fr
     inv.save_fit_data(os.path.join(fit_path,fit_name),which=which) #main thing that core doesnt save is the matricies (a lot of data)
 
 # ---------- Functions for fitting and saving a DRT fit for multiple spectra ----------
-def deg_eis_fitter(folder_loc:str,jar_bias:str,jar_ocv:str,bias_amount:str='n3',fit_ocv:bool=True,which:bool = 'core', init_from_ridge:bool=True):
+def deg_eis_fitter(folder_loc:str, jar_bias:str, jar_ocv:str, bias_amount:str='n3', fit_ocv:bool=True, 
+                    which:bool = 'core', init_from_ridge:bool=True):
     '''
     Map fit's DRT to all stabilty testing EIS files in a given folder and saves the files to the specified jar
-    If the data has already been fit, it will not re-fit the data
+    If the data has already been fit, it will not re-fit the data. This function compliments the Fuel Cell mode
+    stabilty testing Gamry function.
 
-    param folder_loc, string: location of the folder containing the stability testing EIS spectra (path to folder)
-    param jar_bias, string: path to the jar to save the bias DRT fits to (path to folder)
-    param jar_ocv, string: path to the jar to save the ocv DRT fits to (path to folder)
-    param bias_amount, string: the amount of bias to use for the DRT fits. 
-        generally I do the bias EIS at -0.3V so bias_amount = n3 (n for negative, and 3 for 0.3V)
-    param fit_ocv, boolean: whether to map fit the ocv EIS spectra too.
-    param which, string: which data to store. 'core' or 'sample'. Core file sizes are smaller
-    param: init_from_ridge: bool, optional (default: False)
+    param folder_loc, string: (path to a directory)
+        Location of the folder containing the stability testing EIS spectra 
+    param jar_bias, string: (path to a directory)
+        Path to the jar to save the bias DRT fits to 
+    param jar_ocv, string: (path to a directory)
+        Path to the jar to save the ocv DRT fits to 
+    param bias_amount, string: 
+        The amount of bias to use for the DRT fits. 
+        Generally I do the bias EIS at -0.3V so bias_amount = n3 (n for negative, and 3 for 0.3V)
+    param fit_ocv, boolean:
+        Whether to map fit the ocv EIS spectra too.
+    param which, string: (default = True)
+        Which data to store. 'core' or 'sample'. Core file sizes are smaller
+    param init_from_ridge, boolean: optional (default: False)
         If True, use the hyperparametric ridge solution to initialize the Bayesian fit.
         Only valid for single-distribution fits
 
@@ -134,6 +144,83 @@ def deg_eis_fitter(folder_loc:str,jar_bias:str,jar_ocv:str,bias_amount:str='n3',
             
             if name == 0: 
                 map_drt_save(loc_eis,fit_path,fit_name,which=which,init_from_ridge=init_from_ridge)
+        
+        print('Done Fitting EIS for Degradation at OCV')
+
+def ec_stb_eis_fitter(folder_loc:str, jar_bias_ec:str, jar_ocv_ec:str, fit_ocv:bool=True, which:bool = 'core', init_from_ridge:bool=True):
+    '''
+    Map fit's DRT to all stabilty testing EIS files in a given folder and saves the files to the specified jar
+    If the data has already been fit, it will not re-fit the data. This function compliments the Electrolysis Cell mode
+    stabilty testing Gamry function.
+
+    param folder_loc, string: (path to a directory)
+        Location of the folder containing the stability testing EIS spectra 
+    param jar_bias, string: (path to a directory)
+        Path to the jar to save the bias DRT fits to 
+    param jar_ocv, string: (path to a directory)
+        Path to the jar to save the ocv DRT fits to 
+    param fit_ocv, boolean:
+        Whether to map fit the ocv EIS spectra too.
+    param which, string: (default = True)
+        Which data to store. 'core' or 'sample'. Core file sizes are smaller
+    param init_from_ridge, boolean: optional (default: False)
+        If True, use the hyperparametric ridge solution to initialize the Bayesian fit.
+        Only valid for single-distribution fits
+
+    Return --> None
+    '''
+    files = os.listdir(folder_loc)
+    files_eis_bias = []
+    cell_name = os.path.basename(folder_loc).split("_", 3)[2]
+    for file in files: #looping over all files in the folder folder_loc
+        if (file.find('PEIS')!=-1) and (file.find('_ECstability')!=-1) and (file.find('TNV')!=-1) and (file.find('.DTA')!=-1): #really specific to ensure no random EIS spectra get included
+            number = file.split('_ECstability')[1].split('.DTA')[0] #Splits the string of the file at _Deg and at .DTA and saves what is in the center
+            name = cell_name+'_ECstb_TNV'+number #adds more the name to make it more descriptive
+            useful_file = (file,name) #creates a tuple of the file in question and the new name it has just been given
+            files_eis_bias.append(useful_file) #adds tuple of file and name to a list
+
+    for eis in files_eis_bias: #loops through list of degradation eis spectra at bias that was just created
+        loc_eis = os.path.join(folder_loc,eis[0]) #creates the full location of desired the EIS spectra
+        fit_path = jar_bias_ec
+        fit_name = eis[1]+'.pkl'
+        
+        pickel_jar = os.listdir(jar_bias_ec)
+
+        pickel_name = 0
+        for pickel in pickel_jar: # checks to see if this has already been fit, if so name gets set to 1
+            if fit_name == pickel:
+                pickel_name = pickel_name + 1
+                break
+        
+        if pickel_name == 0: 
+            fn.map_drt_save(loc_eis,fit_path,fit_name,which=which,init_from_ridge=init_from_ridge)
+
+    print('Done Fitting EIS for Degradation at Bias')
+
+    if fit_ocv == True:
+        files_eis_ocv = []
+        for file in files: #looping over all files in the folder folder_loc
+            if (file.find('PEIS')!=-1) and (file.find('_ECstability')!=-1) and (file.find('TNV')==-1) and (file.find('.DTA')!=-1): #really specific to ensure no random EIS spectra get included
+                #==-1 on the bias one because I do not want to re-fit the EIS at bias
+                number = file.split('_ECstability')[1].split('.DTA')[0] #Splits the string of the file at _Deg and at .DTA and saves what is in the center
+                name = cell_name +'_ECstb_OCV'+number #adds more the name to make it more descriptive
+                useful_file = (file,name) #creates a tuple of the file in question and the new name it has just been given
+                files_eis_ocv.append(useful_file) #adds tuple of file and name to a list
+
+        for eis in files_eis_ocv: #loops through list of degradation eis spectra at bias that was just created
+            loc_eis = os.path.join(folder_loc,eis[0]) #creates the full location of desired the EIS spectra
+            fit_path = jar_ocv_ec
+            fit_name = eis[1]+'.pkl'
+
+            pickel_jar = os.listdir(jar_ocv_ec)
+            name = 0
+            for pickel in pickel_jar: # checks to see if this has already been fit, if so name gets set to 1
+                if fit_name == pickel:
+                    name = name + 1
+                    break
+            
+            if name == 0: 
+                fn.map_drt_save(loc_eis,fit_path,fit_name,which=which,init_from_ridge=init_from_ridge)
         
         print('Done Fitting EIS for Degradation at OCV')
 

@@ -33,12 +33,18 @@ def plot_resistanceDeg(folder_loc:str, jar_bias:str, jar_ocv:str, area:float,
     If the excel file doesnt exist, this funciton will create it. 
     If the sheet already exists, this function will plot the existing data in the sheet.
 
-    param folder_loc, string: location of the folder containing the EIS stability data
-    param jar_bias, string: path to the jar to save the bias DRT fits to
-    param jar_ocv, string: path to the jar to save the ocv DRT fits to
-    param area, string: The active cell area in cm^2
-    param plot_ocv, boolean: Whether to plot the OCV data
-    param title, boolean: Whether to give the plots titles
+    param folder_loc, string: 
+        location of the folder containing the EIS stability data
+    param jar_bias, string: 
+        path to the jar to save the bias DRT fits to
+    param jar_ocv, string: 
+        path to the jar to save the ocv DRT fits to
+    param area, string: 
+        The active cell area in cm^2
+    param plot_ocv, boolean: (default = True)
+        Whether to plot the OCV data
+    param title, boolean: (default = True)
+        Whether to give the plots titles
 
     Return --> None
     '''
@@ -191,10 +197,14 @@ def standard_performance(loc:str, jar:str, area:float=0.5, **peis_args):
     Plots the EIS, map-fits and plots the DRT, and prints the ohmic and polarization resistance for a cell
     Generally this function is used on the first EIS spectra taken at standard testing conditions
 
-    param loc, str: The location of the folder containing the EIS files (path to folder)
-    param jar, str: The location of the jar containing the map-fits (path to jar)
-    param area, float: The active cell area in cm^2 (default = 0.5)
-    param peis_args, dict: Any additional arguments to be passed to the plot_peis function
+    param loc, str: (path to a directory)
+        The location of the folder containing the EIS files (path to folder)
+    param jar, str: (path to a directory)
+        The location of the jar containing the map-fits (path to jar)
+    param area, float: 
+        The active cell area in cm^2 (default = 0.5)
+    param peis_args, dict: 
+        Any additional arguments to be passed to the plot_peis function
 
     Return --> None, but it plots EIS and DRT. It also prints the ohmic and rp values of the cell
     '''
@@ -722,26 +732,36 @@ def steam_plots(folder_loc:str, fit_path:str, area:float, legend_loc:bool='best'
         df_ec_bias.to_excel(writer, sheet_name=sheet_name, index=False) # Writes this dataframe to a specific worksheet
         writer.save() # Close the Pandas Excel writer and output the Excel file.
 
-def deg_ocv_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float, 
+def deg_ocv_eis_plots(folder_loc:str, jar_loc:str, area:float, start_file:str = 'default',
                         a10:bool=True, eis:bool=True, drt:bool=True, ncol:int=1,
                         legend_loc:str='outside'):
     '''
     Plots the EIS and the fit DRT of a cell taken at OCV during a long term stability test. This function
-    complements a Gamry sequence that I use to test the cell stability over time. DRT must already be fit
+    complements a Gamry sequence that I use to test the cell stability over time in fuel cell mode. 
+    DRT must already be fit
     before using this function.
 
     OCV eis spectra are taken one an hour for the first 10 hours then 1 every 10 hours for the rest of the test
 
-    param folder_loc, str: The folder location of the EIS files (path to directory)
-    param jar_loc, str: The folder location of the pickel jar where the DRT fits are (path to directory)
-    param start_file, str: The name of the first file taken in the stability sequence
-    param area, float: The active cell area in cm^2
-    param a10, bool: (After 10 hours) Whether or not to plot the first 10 hours of the test.
+    Param folder_loc, str: (path to a directory)
+        The folder location of the EIS files 
+    Param jar_loc, str: (path to a directory)
+        The folder location of the pickel jar where the DRT fits are 
+    param area, float: 
+        The active cell area in cm^2
+    Param start_file, str: (default = 'default')
+        The name of the first file taken in the stability sequence
+    param a10, bool: (After 10 hours) (default = True)
+        Whether or not to plot the first 10 hours of the test.
         if True, then only hours 10 onward are plotted
-    param eis, bool: Whether or not to plot the EIS spectra
-    param drt, bool: Whether or not to plot the DRT fits
-    param ncol, int: The number of columns to use in the legend of the plot
-    param legend_loc, str: The location of the legend (default = 'best'). The other option is to put 
+    param eis, bool: (default = True)
+        Whether or not to plot the EIS spectra
+    param drt, bool: (default = True)
+        Whether or not to plot the DRT fits
+    param ncol, int: (default = 1)
+        The number of columns to use in the legend of the plot
+    param legend_loc, str:  (default = 'outside')
+        The location of the legend (default = 'best'). The other option is to put 
         the legend outside the figure and this is done by setting legend_loc = 'outside'
 
     Return --> None but one or more plots are created and shown
@@ -868,7 +888,6 @@ def deg_ocv_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float,
             ax.legend()
             plt.show()
 
-def deg_bias_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float,
                         a10:bool=True, eis:bool=True, drt:bool=True, ncol:int=1, 
                         legend_loc:str='outside'):
     cell_name = os.path.basename(folder_loc).split("_", 3)[2]
@@ -991,26 +1010,36 @@ def deg_bias_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float,
             ax.legend()
             plt.show()
 
-def deg_bias_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float, 
+def deg_bias_eis_plots(folder_loc:str, jar_loc:str, area:float, start_file:str = 'default',
                         a10:bool=True, eis:bool=True, drt:bool=True, ncol:bool=1, 
                         legend_loc:str='outside'):
     '''
     Plots the EIS and the fit DRT of a cell taken at bias during a long term stability test. This function
-    complements a Gamry sequence that I use to test the cell stability over time. DRT must already be fit
-    before using this function.
+    complements a Gamry sequence that I use to test the cell stability over time in fuel cell mode. 
+    DRT must already be fit before using this function.
 
     Bias eis spectra are taken one an hour for the first 10 hours then 1 every 10 hours for the rest of the test
 
-    param folder_loc, str: The folder location of the EIS files (path to directory)
-    param jar_loc, str: The folder location of the pickel jar where the DRT fits are (path to directory)
-    param start_file, str: The name of the first file taken in the stability sequence
-    param area, float: The active cell area in cm^2
-    param a10, bool: (After 10 hours) Whether or not to plot the first 10 hours of the test.
+    param folder_loc, str: (path to a directory)
+        The folder location of the EIS files
+    param jar_loc, str:  (path to a directory)
+        The folder location of the pickel jar where the DRT fits are stored
+    param area, float: 
+        The active cell area in cm^2
+    param start_file, str: (default = 'default')
+        The name of the first file taken in the stability sequence. If 'default' is selected, then
+        the function will find the first ocv file taken at the start of the stability sequence
+    param a10, bool: (After 10 hours) (default = True)
+        Whether or not to plot the first 10 hours of the test.
         if True, then only hours 10 onward are plotted
-    param eis, bool: Whether or not to plot the EIS spectra
-    param drt, bool: Whether or not to plot the DRT fits
-    param ncol, int: The number of columns to use in the legend of the plot
-    param legend_loc, str: The location of the legend (default = 'best'). The other option is to put 
+    param eis, bool: (default = True)
+        Whether or not to plot the EIS spectra
+    param drt, bool: (default = True)
+        Whether or not to plot the DRT fits
+    param ncol, int: (default` = 1)
+        The number of columns to use in the legend of the plot
+    param legend_loc, str: (defult = 'outside')
+        The location of the legend (default = 'best'). The other option is to put 
         the legend outside the figure and this is done by setting legend_loc = 'outside'
 
     Return --> None but one or more plots are created and shown
@@ -1122,6 +1151,346 @@ def deg_bias_eis_plots(folder_loc:str, jar_loc:str, start_file:str, area:float,
                 # --- Finding the right mapfit file and matching it to the right time
                 number = fit[fit.find('_Bias10')+len('_Bias10'):fit.rfind('.pkl')] #gets the bias from the file name
                 map_fit_name = cell_name + '_n3_Bias10' + number + '.pkl'
+                time = round((a10_bias_deg_peis_time[i]-t0)/3600) # to convert to hours and round to the nearest hour from the test start
+                label = str(time) + ' Hours'
+                i = i+1
+
+                # --- Plotting
+                inv = Inverter()
+                inv.load_fit_data(os.path.join(jar_loc,map_fit_name))
+                color = cmap(color_space[c])
+                bp.plot_distribution(None,inv,ax,unit_scale='',label = label,color=color)
+                c = c + 1
+
+            ax.legend()
+            plt.show()
+
+def ECstb_ocv_eis_plots(folder_loc:str, jar_loc:str, area:float, start_file:str = 'default',
+                        a10:bool = True, eis:bool = True, drt:bool = True, ncol:int = 1,
+                         legend_loc:str = 'outside'):
+    '''
+    Plots the EIS and the fit DRT of a cell taken at OCV during a long term stability test. This function
+    complements a Gamry sequence that I use to test the cell stability over time in electrolysis cell (EC) mode
+    DRT must already be fit before using this function.
+
+    OCV eis spectra are taken one an hour for the first 10 hours then 1 every 10 hours for the rest of the test
+
+    param folder_loc, str: (path to a directory)
+        The folder location of the EIS files 
+    param jar_loc, str: (path to a directory)
+        The folder location of the pickel jar where the DRT fits are 
+    param area, float: 
+        The active cell area in cm^2
+    param start_file, str: (default = 'default')
+        The name of the first file taken in the stability sequence
+    param a10, bool: (After 10 hours) (default = True)
+        Whether or not to plot the first 10 hours of the test.
+        if True, then only hours 10 onward are plotted
+    param eis, bool: (default = True)
+        Whether or not to plot the EIS spectra
+    param drt, bool: (default = True)
+        Whether or not to plot the DRT fits
+    param ncol, int: (default = 1)
+        The number of columns to use in the legend of the plot
+    param legend_loc, str:  (default = 'outside')
+        The location of the legend (default = 'best'). The other option is to put 
+        the legend outside the figure and this is done by setting legend_loc = 'outside'
+
+    Return --> None but one or more plots are created and shown
+    '''
+
+    cell_name = os.path.basename(folder_loc).split("_", 3)[2]
+    if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
+        for file in os.listdir(folder_loc): #Finding the first file
+            if file.find('ECstability__#1.DTA')!=-1 and file.find('OCV')!=-1:
+                start_file = os.path.join(folder_loc,file)
+        t0 = int(fl.get_timestamp(start_file).strftime("%s")) # Getting time stamp for first file in s from epoch, and convert to int
+    else:
+        t0 = int(fl.get_timestamp(start_file).strftime("%s")) # Getting time stamp for first file in s from epoch, and convert to int
+
+    if eis == True:
+        'Finding correct EIS files and formatting'
+        dta_files = [file for file in os.listdir(folder_loc) if file.endswith('.DTA')] #Makes a list of all .DTA files in the folder loc
+        ocv_deg_peis = [] #initializing bias files list
+        
+        if a10 == False: #Plot the EIS for the first 10 hours in 1 hr increments (the increment it is taken in)
+            for file in dta_files: #Finding all fuel celp bias EIS files
+                if (file.find('PEIS')!=-1) and (file.find('_ECstability')!=-1) and (file.find('ECstability10')==-1) and (file.find('TNV')==-1):
+                    ocv_deg_peis.append(os.path.join(folder_loc,file))
+
+            f10_ocv_deg_peis = sorted(ocv_deg_peis, key=lambda x: int((x[x.find('__#')+len('__#'):x.rfind('.DTA')]))) #Sorts numerically by time
+            
+            'Plotting EIS'
+            for peis in f10_ocv_deg_peis:
+                # --- Finding and formatting
+                loc = os.path.join(folder_loc, peis) # creates the full path to the file
+                time = peis[peis.find('__#')+len('__#'):peis.rfind('.DTA')] #gets the bias from the file name
+                
+                nyquist_name =  str(time) + ' Hours'
+
+                # --- Plotting
+                plot_peiss(area,nyquist_name,loc,ncol=ncol,legend_loc=legend_loc)
+            plt.show()
+
+        if a10 == True: # Plot the DRT after 10 hours in 10 hour increments (the increment it is taken in)
+            'Finding and formatting'
+            for file in dta_files: #Finding all fuel celp bias EIS files
+                if (file.find('PEIS')!=-1) and (file.find('_ECstability10')!=-1) and (file.find('TNV')==-1):
+                    loc = os.path.join(folder_loc,file)
+                    ocv_deg_peis.append((loc,int(fl.get_timestamp(loc).strftime("%s"))))
+            
+            'Sorting values by time'
+            ocv_deg_peis.sort(key=lambda x:x[1])
+            a10_ocv_deg_peis = ocv_deg_peis
+
+            'Setting up an array for the color map'
+            color = np.linspace(0,1,len(a10_ocv_deg_peis)) # array from 0-1 for the colormap for plotting
+            c = 0 # indicie of the color array
+            cmap = plt.cm.get_cmap('cividis')
+
+            'Plotting EIS'
+            for peis in a10_ocv_deg_peis:
+                loc = os.path.join(folder_loc, peis[0]) # creates the full path to the file
+
+                # --- Finding time of the EIS from the start of the degradation test
+                test_time = peis[1]
+                time = (test_time-t0)/3600 #hrs
+                nyquist_name =  str(round(time)) + ' Hours'
+
+                # --- Plotting
+                plot_peiss(area,nyquist_name,loc,ncol=ncol,legend_loc=legend_loc,color = cmap(color[c]))
+                c = c + 1
+
+            plt.show()
+
+    if drt == True:
+        'Finding and Formatting'
+        fig, ax = plt.subplots() #initializing plots for DRT
+        if a10 == False: #Plot the DRT for the first 10 hours in 1 hr increments (the increment it is taken in)
+            f10_ocv_deg_fits = [file for file in os.listdir(jar_loc) if (file.find('OCV')!=-1 and file.find('OCV10')==-1)] #Makes a list of all OCV files 
+            f10_ocv_deg_fits = sorted(f10_ocv_deg_fits, key=lambda x: int((x[x.find('__#')+len('__#'):x.rfind('.pkl')]))) #Sorts numerically by time
+            
+            for fit in f10_ocv_deg_fits: # Calling fits and plotting
+                # --- Finding and formatting
+                loc = os.path.join(folder_loc, fit) # creates the full path to the file
+                time = fit[fit.find('__#')+len('__#'):fit.rfind('.pkl')] #gets the bias from the file name
+                map_fit_name = cell_name +'_ECstb_OCV__#'+time+'.pkl'
+                label = str(time) + ' Hours'
+
+                # --- Plotting
+                inv = Inverter()
+                inv.load_fit_data(os.path.join(jar_loc,map_fit_name))
+                bp.plot_distribution(None,inv,ax,unit_scale='',label = label)
+            ax.legend()
+            plt.show()
+        
+        if a10 == True:  
+            'Sorting out relavent DRT files'         
+            a10_ocv_fits = [file for file in os.listdir(jar_loc) if file.find('OCV10')!=-1] #Makes a list of all OCV files 
+            a10_ocv_fits = natsort.humansorted(a10_ocv_fits)
+
+            "Finding the time from the correct EIS file"
+            dta_files = [file for file in os.listdir(folder_loc) if file.endswith('.DTA')] #Makes a list of all .DTA files in the folder loc
+            ocv_deg_peis_time = [] #initializing bias files list
+            for file in dta_files: #Finding all fuel cell ocv EIS files
+                if (file.find('PEIS')!=-1) and (file.find('_ECstability10')!=-1) and (file.find('TNV')==-1):
+                    loc = os.path.join(folder_loc,file)
+                    ocv_deg_peis_time.append(fl.get_timestamp(loc).strftime("%s"))
+
+            'Sorting values by time'
+            # The order of the list is reversed to ensure that if there is degradation, the DRT plot can fit the larger spectra
+            a10_ocv_deg_peis_time = natsort.humansorted(ocv_deg_peis_time)
+            a10_ocv_deg_peis_time.sort(reverse=True)
+            
+
+            'Setting up an array for the color map'
+            cmap = plt.cm.get_cmap('cividis')
+            color_space = np.linspace(0,1,len(a10_ocv_fits)) # array from 0-1 for the colormap for plotting
+            c = 0 # indicie of the color array
+
+            i = 0 # Setting the initial index
+            for fit in reversed(a10_ocv_fits): #For loop to plot the DRT of all PO2 files (probably a more elegant way, but this works)
+                # --- Finding the right mapfit file and matching it to the right time
+                number = fit[fit.find('OCV10')+len('OCV10'):fit.rfind('.pkl')] #gets the OCV (which is actually a string)
+                map_fit_name = cell_name +'_ECstb_OCV'+number+'.pkl'
+                time = round((int(a10_ocv_deg_peis_time[i])-t0)/3600) # to convert to hours and round to the nearest hour from the test start
+                label = str(time) + ' Hours'
+                i = i+1
+
+                # --- Plotting
+                inv = Inverter()
+                inv.load_fit_data(os.path.join(jar_loc,map_fit_name))
+                color = cmap(color_space[len(color_space)-c-1])
+                bp.plot_distribution(None,inv,ax,unit_scale='',label = label,color=color)
+                c = c + 1
+
+            ax.legend()
+            plt.show()
+
+def ECstb_bias_eis_plots(folder_loc:str, jar_loc:str, area:float, start_file:str = 'default',
+                        a10:bool = True, eis:bool = True, drt:bool = True, cutoff_inductance = True,
+                        ncol:int = 1, legend_loc:str = 'outside'):
+    '''
+    Plots the EIS and the fit DRT of a cell taken at bias during a long term stability test. This function
+    complements a Gamry sequence that I use to test the cell stability over time in electrolysis cell (EC) mode. 
+    DRT must already be fit before using this function.
+
+    Bias eis spectra are taken one an hour for the first 10 hours then 1 every 10 hours for the rest of the test.
+    The tests are done at around the thermoneutral voltage of the cell.
+    
+    Parameters
+    ----------
+    folder_loc, str: (path to a directory)
+        The folder location of the EIS files
+    jar_loc, str:  (path to a directory)
+        The folder location of the pickel jar where the DRT fits are stored
+    area, float: 
+        The active cell area in cm^2
+    start_file, str: (default = 'default')
+        The name of the first file taken in the stability sequence. If 'default' is selected, then
+        the function will find the first ocv file taken at the start of the stability sequence
+    a10, bool: (After 10 hours) (default = True)
+        Whether or not to plot the first 10 hours of the test.
+        if True, then only hours 10 onward are plotted
+    eis, bool: (default = True)
+        Whether or not to plot the EIS spectra
+    drt, bool: (default = True)
+        Whether or not to plot the DRT fits
+    cutoff_inductance, bool: (default = True)
+        Graphically cuts off the inductance by setting the ylim to -0.05. If the cell is high performing
+        the inductance takes up a huge area on the graph and the EIS spectra is hard to see.
+    ncol, int: (default` = 1)
+        The number of columns to use in the legend of the plot
+    legend_loc, str: (defult = 'outside')
+        The location of the legend (default = 'best'). The other option is to put 
+        the legend outside the figure and this is done by setting legend_loc = 'outside'
+
+    Return --> None but one or more plots are created and shown
+    '''
+
+    cell_name = os.path.basename(folder_loc).split("_", 3)[2]
+
+    if first_file == 'default': #if another file is specified as the first file, this file will be used to find T0
+        for file in os.listdir(folder_loc): #Finding the first file
+            if file.find('ECstability__#1.DTA')!=-1 and file.find('OCV')!=-1:
+                start_file = os.path.join(folder_loc,file)
+        t0 = int(fl.get_timestamp(start_file).strftime("%s")) # Getting time stamp for first file in s from epoch, and convert to int
+    else:
+        t0 = int(fl.get_timestamp(start_file).strftime("%s")) # Getting time stamp for first file in s from epoch, and convert to int
+
+    if eis == True:
+        'Finding correct EIS files and formatting'
+        dta_files = [file for file in os.listdir(folder_loc) if file.endswith('.DTA')] #Makes a list of all .DTA files in the folder loc
+        bias_deg_peis = [] #initializing bias files list
+        
+        if a10 == False: #Plot the EIS for the first 10 hours in 1 hr increments (the increment it is taken in)
+            for file in dta_files: #Finding all fuel celp bias EIS files
+                if (file.find('PEIS_TNV')!=-1) and (file.find('_ECstability')!=-1) and (file.find('ECstability10')==-1):
+                    bias_deg_peis.append(os.path.join(folder_loc,file))
+
+            f10_bias_deg_peis = sorted(bias_deg_peis, key=lambda x: int((x[x.find('__#')+len('__#'):x.rfind('.DTA')]))) #Sorts numerically by time
+            
+            'Plotting EIS'
+            for peis in f10_bias_deg_peis:
+                # --- Finding and formatting
+                loc = os.path.join(folder_loc, peis) # creates the full path to the file
+                time = peis[peis.find('__#')+len('__#'):peis.rfind('.DTA')] #gets the bias from the file name
+                
+                nyquist_name =  str(time) + ' Hours'
+
+                # --- Plotting
+                fn.plot_peiss(area,nyquist_name,loc,legend_loc=legend_loc)
+
+                if cutoff_inductance == True:
+                    plt.gca().set_ylim(bottom=-0.05)
+
+            plt.show()
+
+        if a10 == True: # Plot the EIS after 10 hours in 10 hour increments (the increment it is taken in)
+            'Finding and formatting'
+            for file in dta_files: #Finding all fuel cell bias EIS files
+                if (file.find('PEIS_TNV')!=-1) and (file.find('_ECstability10')!=-1):
+                    loc = os.path.join(folder_loc,file)
+                    bias_deg_peis.append((loc,int(fl.get_timestamp(loc).strftime("%s"))))
+
+            'Sorting values by time'
+            bias_deg_peis.sort(key=lambda x:x[1])
+            a10_bias_deg_peis = bias_deg_peis
+
+            'Setting up an array for the color map'
+            color = np.linspace(0,1,len(a10_bias_deg_peis)) # array from 0-1 for the colormap for plotting
+            c = 0 # indicie of the color array
+            cmap = plt.cm.get_cmap('cividis')
+
+            'Plotting EIS'
+            for peis in a10_bias_deg_peis:
+                loc = os.path.join(folder_loc, peis[0]) # creates the full path to the file
+
+                # --- Finding time of the EIS from the start of the degradation test
+                test_time = peis[1]
+                time = (test_time-t0)/3600 #hrs
+                nyquist_name =  str(round(time)) + ' Hours'
+
+                # --- Plotting
+                fn.plot_peiss(area,nyquist_name,loc,ncol=ncol,legend_loc=legend_loc,color = cmap(color[c]))
+                
+                if cutoff_inductance == True:
+                    plt.gca().set_ylim(bottom=-0.05)
+            
+                c = c + 1
+
+            plt.show()
+
+    if drt == True:
+        'Finding and Formatting'
+        fig, ax = plt.subplots() #initializing plots for DRT
+        
+        if a10 == False: #Plot the DRT for the first 10 hours in 1 hr increments (the increment it is taken in)
+            f10_bias_deg_fits = [file for file in os.listdir(jar_loc) if (file.find('TNV')!=-1 and file.find('TNV10')==-1)] #Makes a list of all Bias files 
+            f10_bias_deg_fits = sorted(f10_bias_deg_fits, key=lambda x: int((x[x.find('__#')+len('__#'):x.rfind('.pkl')]))) #Sorts numerically by time
+            
+            for fit in f10_bias_deg_fits: # Calling fits and plotting
+                # --- Finding and formatting
+                loc = os.path.join(folder_loc, fit) # creates the full path to the file
+                time = fit[fit.find('__#')+len('__#'):fit.rfind('.pkl')] #gets the bias from the file name
+                map_fit_name = cell_name+'_ECstb_TNV__#' + time + '.pkl'
+                label = str(time) + ' Hours'
+
+                # --- Plotting
+                inv = Inverter()
+                inv.load_fit_data(os.path.join(jar_loc,map_fit_name))
+                bp.plot_distribution(None,inv,ax,unit_scale='',label = label)
+
+            ax.legend()
+            plt.show()
+        
+        if a10 == True:  
+            'Sorting out relavent DRT files'         
+            a10_bias_fits = [file for file in os.listdir(jar_loc) if file.find('TNV10')!=-1] #Makes a list of all OCV files 
+            a10_bias_fits = natsort.humansorted(a10_bias_fits)
+
+            "Finding the time from the correct EIS file"
+            dta_files = [file for file in os.listdir(folder_loc) if file.endswith('.DTA')] #Makes a list of all .DTA files in the folder loc
+            bias_deg_peis_time = [] #initializing bias files list
+            
+            for file in dta_files: #Finding all fuel celp bias EIS files
+                if (file.find('PEIS')!=-1) and (file.find('_ECstability10')!=-1) and (file.find('TNV')!=-1):
+                    loc = os.path.join(folder_loc,file)
+                    bias_deg_peis_time.append(int(fl.get_timestamp(loc).strftime("%s")))
+            
+            'Sorting values by time'
+            a10_bias_deg_peis_time = natsort.humansorted(bias_deg_peis_time)
+
+            'Setting up an array for the color map'
+            cmap = plt.cm.get_cmap('cividis')
+            color_space = np.linspace(0,1,len(a10_bias_fits)) # array from 0-1 for the colormap for plotting
+            c = 0 # indicie of the color array
+
+            i = 0 # Setting the initial index
+            for fit in a10_bias_fits: #For loop to plot the DRT of all PO2 files (probably a more elegant way, but this works)
+                # --- Finding the right mapfit file and matching it to the right time
+                number = fit[fit.find('_TNV10')+len('_TNV10'):fit.rfind('.pkl')] #gets the bias from the file name
+                map_fit_name = cell_name + '_ECstb_TNV10' + number + '.pkl'
                 time = round((a10_bias_deg_peis_time[i]-t0)/3600) # to convert to hours and round to the nearest hour from the test start
                 label = str(time) + ' Hours'
                 i = i+1
